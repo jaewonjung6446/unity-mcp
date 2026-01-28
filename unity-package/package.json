@@ -1,0 +1,14 @@
+{
+  "name": "com.jaewon.mcp-unity",
+  "displayName": "MCP Unity Server",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "WebSocket server for MCP integration with Unity Editor",
+  "author": "jaewon",
+  "license": "MIT",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
+    "com.unity.editorcoroutines": "1.0.0"
+  },
+  "type": "library"
+}
