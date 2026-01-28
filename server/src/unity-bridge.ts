@@ -10,6 +10,10 @@ interface PendingRequest {
   timeout: NodeJS.Timeout;
 }
 
+export interface UnityBridgeOptions {
+  port?: number;
+}
+
 export class UnityBridge {
   private ws: WebSocket | null = null;
   private pendingRequests = new Map<string, PendingRequest>();
@@ -20,9 +24,20 @@ export class UnityBridge {
   private reconnectAttempt = 0;
   private maxReconnectDelay = 30000;
   private isShuttingDown = false;
+  private portFromArgs: number | undefined;
+
+  constructor(options?: UnityBridgeOptions) {
+    if (options?.port) {
+      this.portFromArgs = options.port;
+    }
+  }
 
   async start(): Promise<void> {
     await this.readConfig();
+    // 명령줄 인자로 전달된 포트가 있으면 설정 파일보다 우선
+    if (this.portFromArgs !== undefined) {
+      this.port = this.portFromArgs;
+    }
     try {
       await this.connect();
     } catch {

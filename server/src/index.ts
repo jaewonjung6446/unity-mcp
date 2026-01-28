@@ -3,6 +3,31 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { UnityBridge } from './unity-bridge.js';
 import { registerAllTools } from './tools/index.js';
 
+// 명령줄 인자 파싱
+function parseArgs(): { port?: number } {
+  const args = process.argv.slice(2);
+  const result: { port?: number } = {};
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--port' || args[i] === '-p') {
+      const portStr = args[i + 1];
+      if (portStr) {
+        const port = parseInt(portStr, 10);
+        if (!isNaN(port) && port > 0 && port < 65536) {
+          result.port = port;
+        } else {
+          console.error(`[MCP Server] Invalid port: ${portStr}`);
+        }
+        i++; // skip next arg
+      }
+    }
+  }
+
+  return result;
+}
+
+const cliArgs = parseArgs();
+
 const server = new McpServer(
   { name: 'Unity MCP Server', version: '1.0.0' },
   {
@@ -19,7 +44,7 @@ const server = new McpServer(
   }
 );
 
-const bridge = new UnityBridge();
+const bridge = new UnityBridge({ port: cliArgs.port });
 
 registerAllTools(server, bridge);
 

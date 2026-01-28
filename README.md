@@ -37,6 +37,49 @@ In `.mcp.json`:
 }
 ```
 
+## Multiple Unity Projects (다중 프로젝트 설정)
+
+한 로컬에서 여러 Unity 프로젝트의 MCP를 동시에 실행하려면 각각 다른 포트를 사용해야 합니다.
+
+### 1. Unity 프로젝트별 포트 설정
+각 Unity 프로젝트의 `ProjectSettings/McpUnitySettings.json` 파일을 생성:
+
+**Project A** (`ProjectSettings/McpUnitySettings.json`):
+```json
+{
+  "Port": 8090
+}
+```
+
+**Project B** (`ProjectSettings/McpUnitySettings.json`):
+```json
+{
+  "Port": 8091
+}
+```
+
+### 2. MCP 서버 설정
+`.mcp.json`에서 `--port` 또는 `-p` 인자로 포트 지정:
+```json
+{
+  "mcpServers": {
+    "unity-project-a": {
+      "command": "node",
+      "args": ["D:\\Unity\\unity-mcp\\server\\build\\cli.js", "--port", "8090"]
+    },
+    "unity-project-b": {
+      "command": "node",
+      "args": ["D:\\Unity\\unity-mcp\\server\\build\\cli.js", "--port", "8091"]
+    }
+  }
+}
+```
+
+### 포트 우선순위
+1. 명령줄 인자 (`--port`) - 최우선
+2. `ProjectSettings/McpUnitySettings.json` 설정 파일
+3. 기본값: 8090
+
 ## Available Tools (17)
 
 | Tool | Description |
