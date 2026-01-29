@@ -2,7 +2,7 @@ services:
   - type: worker
     name: ntfy-claude-bridge
     runtime: node
-    buildCommand: npm install -g @anthropic-ai/claude-code && npm install && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
       - key: CLAUDE

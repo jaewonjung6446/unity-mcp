@@ -58,13 +58,15 @@ async function runClaudeCode(prompt: string, workDir: string): Promise<string> {
     let output = "";
     let error = "";
 
-    const claude = spawn("claude", [
+    const claude = spawn("npx", [
+      "@anthropic-ai/claude-code",
       "-p", prompt,
       "--dangerously-skip-permissions",
       "--output-format", "text"
     ], {
       cwd: workDir,
-      env: { ...process.env }
+      env: { ...process.env },
+      shell: true
     });
 
     claude.stdout.on("data", (data) => {
