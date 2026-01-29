@@ -5,12 +5,21 @@ import EventSource from "eventsource";
 const NTFY_TOPIC = process.env.NTFY_TOPIC || "jaewon-claude-cmd";
 const NTFY_RESULT_TOPIC = process.env.NTFY_RESULT_TOPIC || "jaewon-claude-done";
 const WORKSPACE = process.env.WORKSPACE || "/opt/render/project/src/workspace";
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
 
-// 프로젝트 설정 (레포지토리 URL)
+// 프로젝트 설정 (레포지토리 이름)
 const PROJECTS: Record<string, string> = {
-  "potion": "https://github.com/jaewonjung6446/potion.git",
-  "unity-mcp": "https://github.com/jaewonjung6446/unity-mcp.git"
+  "potion": "jaewonjung6446/potion",
+  "unity-mcp": "jaewonjung6446/unity-mcp"
 };
+
+// GitHub URL 생성 (토큰 포함)
+function getRepoUrl(repo: string): string {
+  if (GITHUB_TOKEN) {
+    return `https://${GITHUB_TOKEN}@github.com/${repo}.git`;
+  }
+  return `https://github.com/${repo}.git`;
+}
 
 // ntfy로 결과 전송
 async function sendNotification(title: string, message: string, tags: string = "robot") {
@@ -34,8 +43,9 @@ async function sendNotification(title: string, message: string, tags: string = "
 }
 
 // 레포지토리 클론 또는 풀
-function setupRepo(name: string, url: string): string {
+function setupRepo(name: string, repo: string): string {
   const repoPath = `${WORKSPACE}/${name}`;
+  const url = getRepoUrl(repo);
   try {
     // 이미 있으면 pull
     execSync(`git -C ${repoPath} pull`, { stdio: "pipe" });
@@ -43,6 +53,7 @@ function setupRepo(name: string, url: string): string {
   } catch {
     // 없으면 clone
     try {
+      execSync(`mkdir -p ${WORKSPACE}`, { stdio: "pipe" });
       execSync(`git clone ${url} ${repoPath}`, { stdio: "pipe" });
       console.log(`${name} 클론 완료`);
     } catch (e) {
