@@ -215,6 +215,95 @@ const tools: ToolDef[] = [
       const r = await bridge.sendRequest({ method: 'test_active_scene', params: {} });
       return textResult(r);
     }
+  },
+
+  // --- Shader Graph tools ---
+  {
+    name: 'create_shader_graph',
+    description: 'Create a new Shader Graph asset (URP Lit or Unlit template)',
+    schema: {
+      assetPath: z.string().describe('Asset path for the shader graph (e.g., "Assets/Shaders/MyShader.shadergraph")'),
+      templateType: z.enum(['urp_lit', 'urp_unlit']).optional().describe('Template type: "urp_lit" (default) or "urp_unlit"'),
+      shaderName: z.string().optional().describe('Display name for the shader (defaults to file name)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'create_shader_graph', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'add_shader_graph_node',
+    description: 'Add a node to a Shader Graph (SampleTexture2D, Color, Multiply, Add, Lerp, UV, Time, Float, Split, Combine, Fresnel, Noise, etc.)',
+    schema: {
+      assetPath: z.string().describe('Asset path of the shader graph'),
+      nodeType: z.string().describe('Node type (e.g., "SampleTexture2D", "Color", "Multiply", "Add", "Lerp", "UV", "Time", "Float", "Split", "Combine")'),
+      positionX: z.number().optional().describe('X position in the graph (default: -400)'),
+      positionY: z.number().optional().describe('Y position in the graph (default: 0)'),
+      properties: z.record(z.any()).optional().describe('Additional node properties as key-value pairs')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'add_shader_graph_node', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'connect_shader_graph_nodes',
+    description: 'Connect two nodes in a Shader Graph by their slot IDs',
+    schema: {
+      assetPath: z.string().describe('Asset path of the shader graph'),
+      sourceNodeId: z.string().describe('ID of the source (output) node'),
+      sourceSlotId: z.number().describe('Slot ID on the source node'),
+      targetNodeId: z.string().describe('ID of the target (input) node'),
+      targetSlotId: z.number().describe('Slot ID on the target node')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'connect_shader_graph_nodes', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'add_shader_graph_property',
+    description: 'Add an exposed property to a Shader Graph (shown in Material inspector). Supported types: Color, Float, Vector2, Vector3, Vector4, Texture2D, Boolean, Integer',
+    schema: {
+      assetPath: z.string().describe('Asset path of the shader graph'),
+      propertyName: z.string().describe('Display name of the property'),
+      propertyType: z.enum(['Color', 'Float', 'Vector2', 'Vector3', 'Vector4', 'Texture2D', 'Boolean', 'Integer']).describe('Type of the property'),
+      referenceName: z.string().optional().describe('Shader reference name (e.g., "_MainColor"). Auto-generated if omitted'),
+      defaultValue: z.any().optional().describe('Default value for the property')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'add_shader_graph_property', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Material tools ---
+  {
+    name: 'create_material',
+    description: 'Create a new Material asset with a specified shader',
+    schema: {
+      assetPath: z.string().describe('Asset path for the material (e.g., "Assets/Materials/MyMat.mat")'),
+      shaderName: z.string().optional().describe('Shader name (e.g., "Universal Render Pipeline/Lit"). Defaults to URP Lit'),
+      shaderGraphPath: z.string().optional().describe('Asset path to a Shader Graph to use instead of shaderName')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'create_material', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_material_property',
+    description: 'Set a property on a Material (color, float, int, vector, or texture)',
+    schema: {
+      assetPath: z.string().describe('Asset path of the material'),
+      propertyName: z.string().describe('Property name (e.g., "_BaseColor", "_Metallic")'),
+      propertyType: z.enum(['color', 'float', 'int', 'vector', 'texture']).describe('Type of the property value'),
+      value: z.any().describe('Property value. Color: {r,g,b,a}. Vector: {x,y,z,w}. Float/Int: number. Texture: asset path string')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_material_property', params });
+      return textResult(r);
+    }
   }
 ];
 

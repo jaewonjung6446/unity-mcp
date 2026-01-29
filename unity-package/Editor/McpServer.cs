@@ -93,6 +93,16 @@ namespace McpUnity
             Register(new Handlers.SearchHandler());
             Register(new Handlers.ScreenshotHandler());
             Register(new Handlers.TestActiveSceneHandler());
+
+            // Shader Graph tools
+            Register(new Handlers.CreateShaderGraphHandler());
+            Register(new Handlers.AddShaderGraphNodeHandler());
+            Register(new Handlers.ConnectShaderGraphNodesHandler());
+            Register(new Handlers.AddShaderGraphPropertyHandler());
+
+            // Material tools
+            Register(new Handlers.CreateMaterialHandler());
+            Register(new Handlers.SetMaterialPropertyHandler());
         }
 
         private void Register(IToolHandler handler)
