@@ -125,6 +125,12 @@ function parseMessage(message: string): { project: string | null; command: strin
 async function handleMessage(message: string) {
   console.log(`메시지 수신: ${message}`);
 
+  // ping 체크
+  if (isPing(message)) {
+    await sendNotification("pong", "server is alive", "green_heart");
+    return;
+  }
+
   const { project, command } = parseMessage(message);
 
   // 프로젝트 지정 없으면 안내
@@ -193,10 +199,24 @@ function subscribeToNtfy() {
   };
 }
 
+// 헬스체크: 5분마다 heartbeat 전송
+function startHeartbeat() {
+  setInterval(async () => {
+    console.log("heartbeat");
+    await sendNotification("heartbeat", "alive", "green_heart");
+  }, 5 * 60 * 1000);
+}
+
+// "ping" 명령 처리
+function isPing(message: string): boolean {
+  return message.trim().toLowerCase() === "ping";
+}
+
 // 시작
 console.log("ntfy-claude-bridge 시작");
 initWorkspace();
 subscribeToNtfy();
+startHeartbeat();
 
 process.on("SIGINT", () => {
   console.log("종료 중...");
