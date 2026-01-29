@@ -10,6 +10,7 @@
     "dev": "tsc && node dist/index.js"
   },
   "dependencies": {
+    "@anthropic-ai/claude-code": "^1.0.0",
     "eventsource": "^2.0.2"
   },
   "devDependencies": {

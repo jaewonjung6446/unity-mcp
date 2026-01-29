@@ -1,5 +1,11 @@
 import { spawn, execSync } from "child_process";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import EventSource from "eventsource";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const CLAUDE_BIN = join(__dirname, "..", "node_modules", ".bin", "claude");
 
 // 환경변수
 const NTFY_TOPIC = process.env.NTFY_TOPIC || "jaewon-claude-cmd";
@@ -69,8 +75,7 @@ async function runClaudeCode(prompt: string, workDir: string): Promise<string> {
     let output = "";
     let error = "";
 
-    const claude = spawn("npx", [
-      "@anthropic-ai/claude-code",
+    const claude = spawn(CLAUDE_BIN, [
       "-p", prompt,
       "--dangerously-skip-permissions",
       "--output-format", "text"
