@@ -6,17 +6,21 @@ const NTFY_TOPIC = process.env.NTFY_TOPIC || "jaewon-claude-cmd";
 const NTFY_RESULT_TOPIC = process.env.NTFY_RESULT_TOPIC || "jaewon-claude-done";
 const WORK_DIR = process.env.WORK_DIR || "/app/workspace";
 
-// ntfy로 결과 전송
+// ntfy로 결과 전송 (제목은 영어, 본문에 한글 포함)
 async function sendNotification(title: string, message: string, tags: string = "robot") {
   try {
+    // 본문을 UTF-8 바이트로 변환
+    const body = `[${title}]\n${message}`.slice(0, 4000);
+    const encoder = new TextEncoder();
+    const bodyBytes = encoder.encode(body);
+
     await fetch(`https://ntfy.sh/${NTFY_RESULT_TOPIC}`, {
       method: "POST",
       headers: {
-        "Title": title,
-        "Tags": tags,
-        "Content-Type": "text/plain; charset=utf-8"
+        "Title": "Claude",
+        "Tags": tags
       },
-      body: message.slice(0, 4000) // ntfy 메시지 길이 제한
+      body: bodyBytes
     });
     console.log(`알림 전송: ${title}`);
   } catch (error) {
