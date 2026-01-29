@@ -27,24 +27,33 @@ function getRepoUrl(repo: string): string {
   return `https://github.com/${repo}.git`;
 }
 
-// ntfy로 결과 전송
+// ntfy로 결과 전송 (재시도 포함)
 async function sendNotification(title: string, message: string, tags: string = "robot") {
-  try {
-    const body = `[${title}]\n${message}`.slice(0, 4000);
-    const encoder = new TextEncoder();
-    const bodyBytes = encoder.encode(body);
+  const body = `[${title}]\n${message}`.slice(0, 4000);
+  const encoder = new TextEncoder();
+  const bodyBytes = encoder.encode(body);
+  const url = `https://ntfy.sh/${NTFY_RESULT_TOPIC}`;
 
-    await fetch(`https://ntfy.sh/${NTFY_RESULT_TOPIC}`, {
-      method: "POST",
-      headers: {
-        "Title": "Claude",
-        "Tags": tags
-      },
-      body: bodyBytes
-    });
-    console.log(`알림 전송: ${title}`);
-  } catch (error) {
-    console.error("알림 전송 실패:", error);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 10000);
+
+      await fetch(url, {
+        method: "POST",
+        headers: {
+          "Title": "Claude",
+          "Tags": tags
+        },
+        body: bodyBytes,
+        signal: controller.signal
+      });
+      console.log(`알림 전송: ${title}`);
+      return;
+    } catch (error) {
+      console.error(`알림 전송 실패 (${attempt + 1}/3):`, error);
+      if (attempt < 2) await new Promise(r => setTimeout(r, 2000));
+    }
   }
 }
 
