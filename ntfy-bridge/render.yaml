@@ -11,5 +11,5 @@ services:
         value: jaewon-claude-cmd
       - key: NTFY_RESULT_TOPIC
         value: jaewon-claude-done
-      - key: WORK_DIR
-        value: /app/workspace
+      - key: WORKSPACE
+        value: /opt/render/project/src/workspace

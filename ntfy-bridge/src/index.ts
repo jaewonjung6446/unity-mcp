@@ -4,7 +4,7 @@ import EventSource from "eventsource";
 // 환경변수
 const NTFY_TOPIC = process.env.NTFY_TOPIC || "jaewon-claude-cmd";
 const NTFY_RESULT_TOPIC = process.env.NTFY_RESULT_TOPIC || "jaewon-claude-done";
-const WORKSPACE = process.env.WORKSPACE || "/app/workspace";
+const WORKSPACE = process.env.WORKSPACE || "/opt/render/project/src/workspace";
 
 // 프로젝트 설정 (레포지토리 URL)
 const PROJECTS: Record<string, string> = {
