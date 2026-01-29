@@ -76,8 +76,7 @@ async function runClaudeCode(prompt: string, workDir: string): Promise<string> {
       "--output-format", "text"
     ], {
       cwd: workDir,
-      env: { ...process.env },
-      shell: true
+      env: { ...process.env }
     });
 
     claude.stdout.on("data", (data) => {
