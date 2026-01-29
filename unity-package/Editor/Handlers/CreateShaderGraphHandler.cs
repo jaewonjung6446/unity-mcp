@@ -30,8 +30,8 @@ namespace McpUnity.Handlers
             if (shaderName == null)
                 shaderName = Path.GetFileNameWithoutExtension(assetPath);
 
-            var graph = ShaderGraphHelper.CreateEmptyGraph(templateType, shaderName);
-            ShaderGraphHelper.SaveGraph(fullPath, graph);
+            var docs = ShaderGraphHelper.CreateEmptyGraph(templateType, shaderName);
+            ShaderGraphHelper.SaveDocuments(fullPath, docs);
             AssetDatabase.ImportAsset(assetPath);
 
             return new JObject

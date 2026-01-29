@@ -223,7 +223,7 @@ const tools: ToolDef[] = [
     description: 'Create a new Shader Graph asset (URP Lit or Unlit template)',
     schema: {
       assetPath: z.string().describe('Asset path for the shader graph (e.g., "Assets/Shaders/MyShader.shadergraph")'),
-      templateType: z.enum(['urp_lit', 'urp_unlit']).optional().describe('Template type: "urp_lit" (default) or "urp_unlit"'),
+      templateType: z.enum(['urp_lit', 'urp_unlit', 'urp_canvas']).optional().describe('Template type: "urp_lit" (default), "urp_unlit", or "urp_canvas" (for UI Canvas shaders)'),
       shaderName: z.string().optional().describe('Display name for the shader (defaults to file name)')
     },
     handler: async (bridge, params) => {

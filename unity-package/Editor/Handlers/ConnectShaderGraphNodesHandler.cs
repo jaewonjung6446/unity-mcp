@@ -34,18 +34,20 @@ namespace McpUnity.Handlers
             if (!File.Exists(fullPath))
                 return McpServer.CreateError($"Shader graph not found: {assetPath}", "not_found_error");
 
-            var graph = ShaderGraphHelper.LoadGraph(fullPath);
+            var docs = ShaderGraphHelper.LoadDocuments(fullPath);
+            var graphData = ShaderGraphHelper.GetGraphData(docs);
+
             var edge = ShaderGraphHelper.CreateEdge(sourceNodeId, sourceSlotId, targetNodeId, targetSlotId);
 
-            var edges = graph["m_Edges"] as JArray;
+            var edges = graphData["m_Edges"] as JArray;
             if (edges == null)
             {
                 edges = new JArray();
-                graph["m_Edges"] = edges;
+                graphData["m_Edges"] = edges;
             }
             edges.Add(edge);
 
-            ShaderGraphHelper.SaveGraph(fullPath, graph);
+            ShaderGraphHelper.SaveDocuments(fullPath, docs);
             AssetDatabase.ImportAsset(assetPath);
 
             return new JObject

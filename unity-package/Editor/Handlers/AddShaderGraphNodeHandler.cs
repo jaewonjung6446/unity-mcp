@@ -31,19 +31,26 @@ namespace McpUnity.Handlers
             if (!File.Exists(fullPath))
                 return McpServer.CreateError($"Shader graph not found: {assetPath}", "not_found_error");
 
-            var graph = ShaderGraphHelper.LoadGraph(fullPath);
-            var node = ShaderGraphHelper.CreateNodeObject(nodeType, posX, posY, properties);
-            var nodeId = node["m_Id"].ToString();
+            var docs = ShaderGraphHelper.LoadDocuments(fullPath);
+            var graphData = ShaderGraphHelper.GetGraphData(docs);
 
-            var nodes = graph["m_Nodes"] as JArray;
+            // Create node + slot documents
+            var (nodeDoc, slotDocs, nodeId) = ShaderGraphHelper.CreateNode(nodeType, posX, posY, properties);
+
+            // Add node reference to GraphData
+            var nodes = graphData["m_Nodes"] as JArray;
             if (nodes == null)
             {
                 nodes = new JArray();
-                graph["m_Nodes"] = nodes;
+                graphData["m_Nodes"] = nodes;
             }
-            nodes.Add(node);
+            nodes.Add(new JObject { ["m_Id"] = nodeId });
 
-            ShaderGraphHelper.SaveGraph(fullPath, graph);
+            // Append node and slot documents
+            docs.Add(nodeDoc);
+            docs.AddRange(slotDocs);
+
+            ShaderGraphHelper.SaveDocuments(fullPath, docs);
             AssetDatabase.ImportAsset(assetPath);
 
             return new JObject

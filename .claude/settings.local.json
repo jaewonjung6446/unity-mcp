@@ -5,7 +5,14 @@
       "Bash(tree:*)",
       "Bash(grep:*)",
       "Bash(npm run build)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(copy \"D:\\\\Unity\\\\Izakoza\\\\unity-mcp\\\\unity-package\\\\Editor\\\\ShaderGraphHelper.cs\" \"D:\\\\Unity\\\\CautionPotion\\\\unity-mcp\\\\unity-package\\\\Editor\\\\ShaderGraphHelper.cs\")",
+      "Bash(copy:*)",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "Bash(python3:*)",
+      "mcp__claude_ai_Notion__notion-update-page",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

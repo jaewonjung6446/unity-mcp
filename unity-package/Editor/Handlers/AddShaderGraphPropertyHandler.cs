@@ -23,7 +23,7 @@ namespace McpUnity.Handlers
             if (string.IsNullOrEmpty(propertyType))
                 return McpServer.CreateError("Missing required parameter: propertyType", "validation_error");
 
-            if (!ShaderGraphHelper.PropertyTypeIds.ContainsKey(propertyType))
+            if (!ShaderGraphHelper.PropertyTypeMap.ContainsKey(propertyType))
                 return McpServer.CreateError($"Unknown property type: {propertyType}. Supported: Color, Float, Vector2, Vector3, Vector4, Texture2D, Boolean, Integer", "validation_error");
 
             var fullPath = Path.Combine(
@@ -33,33 +33,49 @@ namespace McpUnity.Handlers
             if (!File.Exists(fullPath))
                 return McpServer.CreateError($"Shader graph not found: {assetPath}", "not_found_error");
 
-            var graph = ShaderGraphHelper.LoadGraph(fullPath);
+            var docs = ShaderGraphHelper.LoadDocuments(fullPath);
+            var graphData = ShaderGraphHelper.GetGraphData(docs);
 
-            // Create property
-            var property = ShaderGraphHelper.CreatePropertyObject(propertyName, propertyType, referenceName, defaultValue);
-            var propertyId = property["m_Id"].ToString();
+            // Count existing properties for Y positioning
+            var props = graphData["m_Properties"] as JArray ?? new JArray();
+            float posY = props.Count * 150f;
 
-            var props = graph["m_Properties"] as JArray;
-            if (props == null)
+            // Create property + node + slots
+            var (propDoc, nodeDoc, slotDocs, propId, nodeId) =
+                ShaderGraphHelper.CreateProperty(propertyName, propertyType, referenceName, defaultValue, -600f, posY);
+
+            // Add property reference to GraphData
+            if (graphData["m_Properties"] == null)
+                graphData["m_Properties"] = new JArray();
+            ((JArray)graphData["m_Properties"]).Add(new JObject { ["m_Id"] = propId });
+
+            // Add node reference to GraphData
+            if (graphData["m_Nodes"] == null)
+                graphData["m_Nodes"] = new JArray();
+            ((JArray)graphData["m_Nodes"]).Add(new JObject { ["m_Id"] = nodeId });
+
+            // Add to CategoryData's child list (find first CategoryData)
+            foreach (var doc in docs)
             {
-                props = new JArray();
-                graph["m_Properties"] = props;
+                if (doc["m_Type"]?.ToString() == "UnityEditor.ShaderGraph.CategoryData")
+                {
+                    var children = doc["m_ChildObjectList"] as JArray;
+                    if (children == null)
+                    {
+                        children = new JArray();
+                        doc["m_ChildObjectList"] = children;
+                    }
+                    children.Add(new JObject { ["m_Id"] = propId });
+                    break;
+                }
             }
-            props.Add(property);
 
-            // Create corresponding PropertyNode
-            var propNode = ShaderGraphHelper.CreatePropertyNode(propertyId, propertyName, propertyType, -600f, props.Count * 150f);
-            var nodeId = propNode["m_Id"].ToString();
+            // Append documents
+            docs.Add(propDoc);
+            docs.Add(nodeDoc);
+            docs.AddRange(slotDocs);
 
-            var nodes = graph["m_Nodes"] as JArray;
-            if (nodes == null)
-            {
-                nodes = new JArray();
-                graph["m_Nodes"] = nodes;
-            }
-            nodes.Add(propNode);
-
-            ShaderGraphHelper.SaveGraph(fullPath, graph);
+            ShaderGraphHelper.SaveDocuments(fullPath, docs);
             AssetDatabase.ImportAsset(assetPath);
 
             return new JObject
@@ -67,9 +83,9 @@ namespace McpUnity.Handlers
                 ["success"] = true,
                 ["type"] = "text",
                 ["message"] = $"Added {propertyType} property '{propertyName}' to shader graph",
-                ["propertyId"] = propertyId,
+                ["propertyId"] = propId,
                 ["nodeId"] = nodeId,
-                ["referenceName"] = property["m_ReferenceName"]?.ToString()
+                ["referenceName"] = referenceName ?? ("_" + propertyName.Replace(" ", ""))
             };
         }
     }
