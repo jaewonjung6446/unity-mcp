@@ -28,13 +28,21 @@ namespace McpUnity
         private readonly Dictionary<string, IToolHandler> _tools = new();
         private readonly List<TcpClient> _clients = new();
         private int _port = 8090;
+        private bool _isQuitting;
 
         public bool IsListening { get; private set; }
 
         static McpServer()
         {
             EditorApplication.delayCall += () => Instance.Start();
-            EditorApplication.quitting += () => _instance?.Dispose();
+            EditorApplication.quitting += () =>
+            {
+                if (_instance != null)
+                {
+                    _instance._isQuitting = true;
+                    _instance.Dispose();
+                }
+            };
             AssemblyReloadEvents.beforeAssemblyReload += () =>
             {
                 _instance?.Stop();
@@ -99,6 +107,7 @@ namespace McpUnity
             Register(new Handlers.AddShaderGraphNodeHandler());
             Register(new Handlers.ConnectShaderGraphNodesHandler());
             Register(new Handlers.AddShaderGraphPropertyHandler());
+            Register(new Handlers.GetShaderGraphNodeTypesHandler());
 
             // Material tools
             Register(new Handlers.CreateMaterialHandler());
@@ -140,6 +149,21 @@ namespace McpUnity
 
             try
             {
+                // If Unity is quitting, send close frame (1001 Going Away) to clients
+                // so Node.js MCP server exits immediately instead of becoming a zombie.
+                // For domain reload / play mode transitions, skip close frame
+                // so Node.js keeps reconnecting until Unity comes back.
+                if (_isQuitting)
+                {
+                    lock (_clients)
+                    {
+                        foreach (var client in _clients)
+                        {
+                            try { SendCloseFrame(client, 1001); } catch { }
+                        }
+                    }
+                }
+
                 _cts?.Cancel();
                 _tcpListener?.Stop();
                 lock (_clients)
@@ -153,6 +177,41 @@ namespace McpUnity
                 Debug.Log("[MCP] WebSocket server stopped");
             }
             catch { }
+        }
+
+        private void SendCloseFrame(TcpClient client, ushort code)
+        {
+            if (!client.Connected) return;
+            var stream = client.GetStream();
+            var payload = new byte[] { (byte)(code >> 8), (byte)(code & 0xFF) };
+            var frame = BuildWebSocketFrame(0x88, payload); // 0x88 = fin + close
+            stream.Write(frame, 0, frame.Length);
+            stream.Flush();
+        }
+
+        private byte[] BuildWebSocketFrame(byte firstByte, byte[] data)
+        {
+            using (var ms = new MemoryStream())
+            {
+                ms.WriteByte(firstByte);
+                if (data.Length < 126)
+                    ms.WriteByte((byte)data.Length);
+                else if (data.Length <= 65535)
+                {
+                    ms.WriteByte(126);
+                    ms.WriteByte((byte)(data.Length >> 8));
+                    ms.WriteByte((byte)(data.Length & 0xFF));
+                }
+                else
+                {
+                    ms.WriteByte(127);
+                    var lenBytes = BitConverter.GetBytes((long)data.Length);
+                    for (int i = 7; i >= 0; i--)
+                        ms.WriteByte(lenBytes[i]);
+                }
+                ms.Write(data, 0, data.Length);
+                return ms.ToArray();
+            }
         }
 
         private async Task AcceptLoop(CancellationToken ct)

@@ -23,6 +23,7 @@ export class UnityBridge {
   private reconnectTimer: NodeJS.Timeout | null = null;
   private reconnectAttempt = 0;
   private maxReconnectDelay = 30000;
+  private maxReconnectAttempts = 10;
   private isShuttingDown = false;
   private portFromArgs: number | undefined;
 
@@ -81,8 +82,13 @@ export class UnityBridge {
         this.handleMessage(event.data.toString());
       };
 
-      this.ws.onclose = () => {
+      this.ws.onclose = (event) => {
         this.ws = null;
+        if (event.code === 1001) {
+          // Unity is intentionally shutting down (Going Away) - exit cleanly
+          console.error('[Unity Bridge] Unity is shutting down (close code 1001), exiting');
+          process.exit(0);
+        }
         if (!this.isShuttingDown) {
           this.scheduleReconnect();
         }
@@ -92,6 +98,10 @@ export class UnityBridge {
 
   private scheduleReconnect(): void {
     if (this.reconnectTimer) return;
+    if (this.reconnectAttempt >= this.maxReconnectAttempts) {
+      console.error(`[Unity Bridge] Max reconnect attempts (${this.maxReconnectAttempts}) reached, exiting`);
+      process.exit(1);
+    }
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempt), this.maxReconnectDelay);
     this.reconnectAttempt++;
     this.reconnectTimer = setTimeout(async () => {

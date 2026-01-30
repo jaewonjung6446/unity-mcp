@@ -12,7 +12,8 @@
       "Bash(python3:*)",
       "mcp__claude_ai_Notion__notion-update-page",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

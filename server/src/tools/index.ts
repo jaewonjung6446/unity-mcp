@@ -276,6 +276,17 @@ const tools: ToolDef[] = [
       return textResult(r);
     }
   },
+  {
+    name: 'get_shader_graph_node_types',
+    description: 'Get all supported Shader Graph node types with their input/output slot definitions, property types, and template types. Use this before creating or editing shader graphs to know available nodes and their slot IDs for connections.',
+    schema: {
+      nodeType: z.string().optional().describe('Filter by a specific node type name (e.g., "SampleTexture2D"). Omit to get all types.')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_shader_graph_node_types', params });
+      return textResult(r);
+    }
+  },
 
   // --- Material tools ---
   {
