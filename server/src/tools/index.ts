@@ -340,6 +340,107 @@ const tools: ToolDef[] = [
       const r = await bridge.sendRequest({ method: 'set_game_object_material', params });
       return textResult(r);
     }
+  },
+
+  // --- Volume / Post-processing tools ---
+  {
+    name: 'get_volume_settings',
+    description: 'Get URP Volume post-processing settings (Bloom, Vignette, ColorAdjustments, etc.) from the scene. Returns all Volume components with their override properties and values.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of a specific Volume GameObject. Omit to scan all Volumes in the scene.'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the Volume GameObject (e.g., "Global Volume")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_volume_settings', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_volume_component',
+    description: 'Set properties on a URP Volume post-processing component (Bloom, Vignette, ColorAdjustments, Tonemapping, DepthOfField, MotionBlur, ChromaticAberration, LensDistortion, FilmGrain, WhiteBalance, etc.). Automatically enables overrideState for changed properties.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the Volume GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the Volume GameObject'),
+      componentType: z.string().describe('Volume component type name (e.g., "Bloom", "Vignette", "ColorAdjustments", "Tonemapping", "DepthOfField", "MotionBlur", "ChromaticAberration", "LensDistortion", "FilmGrain", "WhiteBalance")'),
+      properties: z.record(z.any()).describe('Properties to set as key-value pairs (e.g., { "intensity": 2.0, "threshold": 0.8 }). Color values use {r,g,b,a}, Vector values use {x,y,z,w}.'),
+      addIfMissing: z.boolean().optional().describe('Add the component to the profile if missing (default: true)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_volume_component', params });
+      return textResult(r);
+    }
+  },
+  // --- UI QA tools ---
+  {
+    name: 'find_ui_elements',
+    description: 'Scan all Canvas UI elements in the scene. Returns path, instanceId, screen rect, component types, interactable state, text content, and depth for each element. Works in both Edit and Play mode.',
+    schema: {
+      filter: z.string().optional().describe('Filter by component type name (e.g., "Button", "InputField", "Toggle")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'find_ui_elements', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'inspect_ui_layout',
+    description: 'Static analysis of UI layout issues: overlap between selectables, off-screen elements, touch targets too small (<88px), and text overflow. Works in both Edit and Play mode.',
+    schema: {
+      screenWidth: z.number().optional().describe('Screen width in pixels (default: 1920)'),
+      screenHeight: z.number().optional().describe('Screen height in pixels (default: 1080)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'inspect_ui_layout', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'click_ui_element',
+    description: 'Simulate a UI click on a GameObject via ExecuteEvents (pointerEnter → pointerDown → pointerUp → pointerClick). Play Mode only.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target UI element'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the UI element (e.g., "Canvas/Panel/Button")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'click_ui_element', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_ui_input',
+    description: 'Set text on an InputField or TMP_InputField and trigger onValueChanged/onEndEdit events. Play Mode only.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the InputField GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the InputField GameObject'),
+      text: z.string().describe('Text to set on the input field')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_ui_input', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_ui_state',
+    description: 'Get the current state of a UI element: Button (interactable), Toggle (isOn), Slider (value/min/max), InputField (text), Dropdown (value/options), plus RectTransform screen rect and text content. Works in both Edit and Play mode.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the UI element'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the UI element')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_ui_state', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_play_mode',
+    description: 'Enter or exit Unity Play Mode. The transition is async — use get_state to confirm completion.',
+    schema: {
+      play: z.boolean().describe('true to enter Play Mode, false to exit')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_play_mode', params });
+      return textResult(r);
+    }
   }
 ];
 

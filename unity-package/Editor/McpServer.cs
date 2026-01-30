@@ -53,13 +53,6 @@ namespace McpUnity
             {
                 EditorApplication.delayCall += () => Instance.Start();
             };
-            EditorApplication.playModeStateChanged += state =>
-            {
-                if (state == PlayModeStateChange.ExitingEditMode)
-                    _instance?.Stop();
-                else if (state == PlayModeStateChange.EnteredEditMode)
-                    EditorApplication.delayCall += () => Instance.Start();
-            };
         }
 
         private McpServer()
@@ -116,6 +109,18 @@ namespace McpUnity
             // Scene analysis & object material assignment
             Register(new Handlers.AnalyzeSceneHandler());
             Register(new Handlers.SetGameObjectMaterialHandler());
+
+            // Volume / Post-processing tools
+            Register(new Handlers.GetVolumeSettingsHandler());
+            Register(new Handlers.SetVolumeComponentHandler());
+
+            // UI QA tools
+            Register(new Handlers.FindUiElementsHandler());
+            Register(new Handlers.InspectUiLayoutHandler());
+            Register(new Handlers.ClickUiElementHandler());
+            Register(new Handlers.SetUiInputHandler());
+            Register(new Handlers.GetUiStateHandler());
+            Register(new Handlers.SetPlayModeHandler());
         }
 
         private void Register(IToolHandler handler)

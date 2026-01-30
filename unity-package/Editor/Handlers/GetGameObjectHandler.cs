@@ -105,5 +105,30 @@ namespace McpUnity.Handlers
             }
             return path;
         }
+
+        /// <summary>
+        /// Resolve a GameObject from JObject containing instanceId or gameObjectPath.
+        /// Returns null and sets error if not found.
+        /// </summary>
+        public static GameObject ResolveGameObject(JObject parameters, out JObject error)
+        {
+            error = null;
+            var instanceId = parameters["instanceId"];
+            var goPath = parameters["gameObjectPath"]?.ToString();
+
+            GameObject go = null;
+            if (instanceId != null)
+                go = EditorUtility.InstanceIDToObject(instanceId.ToObject<int>()) as GameObject;
+            else if (!string.IsNullOrEmpty(goPath))
+                go = GameObject.Find(goPath);
+
+            if (go == null)
+            {
+                error = McpServer.CreateError(
+                    $"GameObject not found. instanceId={instanceId}, gameObjectPath={goPath}",
+                    "not_found_error");
+            }
+            return go;
+        }
     }
 }

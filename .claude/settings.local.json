@@ -14,7 +14,12 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "Bash(npx tsc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(cd:*)",
+      "Bash(dir \"D:\\\\fork\\\\unity-mcp\\\\unity-package\\\\Editor\\\\Handlers\")",
+      "Bash(dir:*)",
+      "Bash(cmd /c:*)",
+      "Bash(pushd:*)"
     ]
   }
 }
