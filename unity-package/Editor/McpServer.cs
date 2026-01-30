@@ -112,6 +112,10 @@ namespace McpUnity
             // Material tools
             Register(new Handlers.CreateMaterialHandler());
             Register(new Handlers.SetMaterialPropertyHandler());
+
+            // Scene analysis & object material assignment
+            Register(new Handlers.AnalyzeSceneHandler());
+            Register(new Handlers.SetGameObjectMaterialHandler());
         }
 
         private void Register(IToolHandler handler)

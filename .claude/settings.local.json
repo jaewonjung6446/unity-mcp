@@ -13,7 +13,8 @@
       "mcp__claude_ai_Notion__notion-update-page",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)"
     ]
   }
 }

@@ -315,6 +315,31 @@ const tools: ToolDef[] = [
       const r = await bridge.sendRequest({ method: 'set_material_property', params });
       return textResult(r);
     }
+  },
+
+  // --- Scene analysis & object material assignment ---
+  {
+    name: 'analyze_scene',
+    description: 'Analyze the active scene and return all renderers, materials, shaders, and lights. Use this to understand scene composition before creating or assigning shaders/materials.',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'analyze_scene', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_game_object_material',
+    description: 'Assign a material asset to a GameObject\'s Renderer component',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target GameObject (from analyze_scene or get_game_object)'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject (e.g., "Environment/Cube")'),
+      materialPath: z.string().describe('Asset path of the material to apply (e.g., "Assets/Materials/MyMat.mat")'),
+      materialIndex: z.number().optional().describe('Material slot index for multi-material renderers (default: 0)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_game_object_material', params });
+      return textResult(r);
+    }
   }
 ];
 
