@@ -19,7 +19,15 @@
       "Bash(dir \"D:\\\\fork\\\\unity-mcp\\\\unity-package\\\\Editor\\\\Handlers\")",
       "Bash(dir:*)",
       "Bash(cmd /c:*)",
-      "Bash(pushd:*)"
+      "Bash(pushd:*)",
+      "Bash(git -C \"D:\\\\Unity\\\\Izakoza\\\\unity-mcp\" log --oneline -15)",
+      "Bash(git -C \"D:\\\\Unity\\\\Izakoza\\\\unity-mcp\" status)",
+      "Bash(server \")",
+      "Bash(git -C \"D:/fork/Izakoza-\" remote -v)",
+      "Bash(git -C \"D:/Unity/CautionPotion/potion\" remote -v)",
+      "Bash(git -C \"D:/Unity/Izakoza/unity-mcp\" remote -v)",
+      "Bash(test:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

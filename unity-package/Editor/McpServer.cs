@@ -34,7 +34,11 @@ namespace McpUnity
 
         static McpServer()
         {
-            EditorApplication.delayCall += () => Instance.Start();
+            EditorApplication.delayCall += () =>
+            {
+                if (McpServerMenu.AutoStart)
+                    Instance.Start();
+            };
             EditorApplication.quitting += () =>
             {
                 if (_instance != null)
@@ -51,7 +55,11 @@ namespace McpUnity
             };
             AssemblyReloadEvents.afterAssemblyReload += () =>
             {
-                EditorApplication.delayCall += () => Instance.Start();
+                EditorApplication.delayCall += () =>
+                {
+                    if (McpServerMenu.AutoStart)
+                        Instance.Start();
+                };
             };
         }
 
@@ -121,6 +129,13 @@ namespace McpUnity
             Register(new Handlers.SetUiInputHandler());
             Register(new Handlers.GetUiStateHandler());
             Register(new Handlers.SetPlayModeHandler());
+
+            // QA Simulation tools
+            Register(new Handlers.GetConsoleLogsHandler());
+            Register(new Handlers.GetSceneHierarchyHandler());
+            Register(new Handlers.SimulateInputHandler());
+            Register(new Handlers.GetComponentDataHandler());
+            Register(new Handlers.FindObjectsByCriteriaHandler());
         }
 
         private void Register(IToolHandler handler)

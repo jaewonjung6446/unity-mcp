@@ -40,7 +40,20 @@ const server = new McpServer(
 - After creating or changing objects in a scene or prefab, focus on the objects that were created or changed.
 - After making a change to a scene or prefab that you want to keep, save it.
 - After editing a prefab, exit isolation mode before continuing to work on the scene.
-- Take a screenshot after every change you make to a loaded Unity scene or prefab that affects visuals.`
+- Take a screenshot after every change you make to a loaded Unity scene or prefab that affects visuals.
+
+QA Simulation workflow:
+1. Scene analysis: use analyze_scene, find_ui_elements, find_objects_by_criteria, and get_scene_hierarchy to understand scene structure.
+2. Code analysis: use get_asset_contents to read key scripts and understand game logic.
+3. Plan QA: create a list of test scenarios based on scene and code analysis.
+4. Enter Play Mode (set_play_mode) and clear console buffer (get_console_logs with clear=true).
+5. For each test step:
+   a. Take a screenshot (before state).
+   b. Perform action: click_ui_element for UI, simulate_input for gameplay (WASD, mouse, etc.).
+   c. Wait for result: wait_for_seconds for animations/transitions.
+   d. Verify: get_console_logs (check for errors), get_component_data (check game state), get_scene_hierarchy (check object changes), screenshot (after state).
+6. Exit Play Mode (set_play_mode play=false).
+7. Write bug report with: severity, reproduction steps, screenshots, console logs, and expected vs actual behavior.`
   }
 );
 

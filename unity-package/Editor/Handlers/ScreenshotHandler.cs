@@ -19,7 +19,28 @@ namespace McpUnity.Handlers
             {
                 if (view == "game")
                 {
-                    ScreenCapture.CaptureScreenshot(tempPath);
+                    // Find the Game view window and read its pixels directly
+                    var gameViewType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView");
+                    if (gameViewType == null)
+                        return McpServer.CreateError("Could not find GameView type", "screenshot_error");
+
+                    var gameView = EditorWindow.GetWindow(gameViewType, false, null, false);
+                    if (gameView == null)
+                        return McpServer.CreateError("No Game View window found", "not_found_error");
+
+                    gameView.Repaint();
+
+                    int width = (int)gameView.position.width;
+                    int height = (int)gameView.position.height;
+                    var colors = UnityEditorInternal.InternalEditorUtility.ReadScreenPixel(
+                        gameView.position.position, width, height);
+
+                    var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+                    tex.SetPixels(colors);
+                    tex.Apply();
+
+                    File.WriteAllBytes(tempPath, tex.EncodeToPNG());
+                    UnityEngine.Object.DestroyImmediate(tex);
                 }
                 else
                 {

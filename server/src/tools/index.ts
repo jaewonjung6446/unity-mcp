@@ -441,6 +441,88 @@ const tools: ToolDef[] = [
       const r = await bridge.sendRequest({ method: 'set_play_mode', params });
       return textResult(r);
     }
+  },
+
+  // --- QA Simulation tools ---
+  {
+    name: 'get_console_logs',
+    description: 'Retrieve Unity console log entries (errors, warnings, exceptions). Uses Application.logMessageReceived buffer. Essential for detecting runtime errors during QA testing.',
+    schema: {
+      filter: z.string().optional().describe('Filter by log type: "error", "warning", "log", "exception", "assert", or "all" (default: all)'),
+      since: z.number().optional().describe('Only return logs after this Unix timestamp in milliseconds'),
+      clear: z.boolean().optional().describe('Clear the log buffer after reading (default: false)'),
+      maxCount: z.number().optional().describe('Maximum number of log entries to return (default: 100, max: 500)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_console_logs', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_scene_hierarchy',
+    description: 'Get a snapshot of the scene GameObject hierarchy tree. Useful for detecting object creation/destruction/activation changes during QA testing.',
+    schema: {
+      rootPath: z.string().optional().describe('Hierarchical path to start from (e.g., "Canvas/Panel"). Omit for full scene.'),
+      maxDepth: z.number().optional().describe('Maximum depth to traverse (default: 10, max: 50)'),
+      includeInactive: z.boolean().optional().describe('Include inactive GameObjects (default: true)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_scene_hierarchy', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'wait_for_seconds',
+    description: 'Wait for a specified duration. Useful for waiting for animations, scene transitions, or loading to complete during QA testing. Implemented server-side (no Unity call).',
+    schema: {
+      seconds: z.number().describe('Duration to wait in seconds (0.1 to 30)')
+    },
+    handler: async (_bridge, params) => {
+      const seconds = Math.max(0.1, Math.min(30, params.seconds));
+      await new Promise(resolve => setTimeout(resolve, seconds * 1000));
+      return textResult({ success: true, message: `Waited ${seconds}s` });
+    }
+  },
+  {
+    name: 'simulate_input',
+    description: 'Simulate keyboard/mouse input in Play Mode. Supports New Input System (full key/mouse simulation) and Legacy Input (EventSystem-based mouse clicks). For gameplay testing: WASD movement, Space jump, mouse aiming/clicking.',
+    schema: {
+      action: z.enum(['keyDown', 'keyUp', 'mouseClick', 'mouseMove', 'hold']).describe('Input action type'),
+      key: z.string().optional().describe('Key name for keyboard actions (e.g., "w", "space", "escape", "leftShift")'),
+      position: z.object({ x: z.number(), y: z.number() }).optional().describe('Screen position for mouse actions {x, y}'),
+      duration: z.number().optional().describe('Hold duration in seconds for "hold" action (default: 0.5, max: 30)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'simulate_input', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_component_data',
+    description: 'Read serialized field values from any component on a GameObject. Use to verify game state: HP, score, inventory, transform values, etc.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject (e.g., "Player")'),
+      componentType: z.string().describe('Component type name (e.g., "PlayerHealth", "Rigidbody", "Animator")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_component_data', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'find_objects_by_criteria',
+    description: 'Search for GameObjects in the scene by tag, layer, component type, or name. Works with both UI and 3D objects.',
+    schema: {
+      tag: z.string().optional().describe('Filter by tag (e.g., "Player", "Enemy")'),
+      layer: z.string().optional().describe('Filter by layer name or index (e.g., "UI", "Default", "5")'),
+      componentType: z.string().optional().describe('Filter by component type name (e.g., "Rigidbody", "AudioSource", "PlayerController")'),
+      nameContains: z.string().optional().describe('Filter by name substring (case-insensitive)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'find_objects_by_criteria', params: params ?? {} });
+      return textResult(r);
+    }
   }
 ];
 
