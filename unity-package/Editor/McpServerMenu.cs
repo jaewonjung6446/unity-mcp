@@ -38,7 +38,9 @@ namespace McpUnity
         [MenuItem(MenuStop, true)]
         private static bool StopServerValidate()
         {
-            return McpServer.Instance.IsListening;
+            // Always allow Stop so the user can force-release the port
+            // even when IsListening is false (zombie listener scenario).
+            return true;
         }
 
         [MenuItem(MenuAutoStart, priority = 20)]

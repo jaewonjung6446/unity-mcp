@@ -3,7 +3,8 @@
   "rootNamespace": "McpUnity",
   "references": [
     "Unity.EditorCoroutines.Editor",
-    "GUID:df380645f10b7bc4b97d4f5eb6303d95"
+    "GUID:df380645f10b7bc4b97d4f5eb6303d95",
+    "Unity.InputSystem"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
@@ -14,6 +15,12 @@
   ],
   "autoReferenced": false,
   "defineConstraints": [],
-  "versionDefines": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.inputsystem",
+      "expression": "",
+      "define": "ENABLE_INPUT_SYSTEM"
+    }
+  ],
   "noEngineReferences": false
 }

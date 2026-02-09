@@ -35,7 +35,7 @@ unity-mcp/
 ### 1. Unity Package
 `Packages/manifest.json`에 추가:
 ```json
-"com.jaewon.mcp-unity": "file:../../unity-mcp/unity-package"
+"com.jaewon.mcp-unity": "https://github.com/jaewonjung6446/unity-mcp.git?path=unity-package"
 ```
 - Unity 2022.3 이상 필요
 - 의존성: `com.unity.nuget.newtonsoft-json`, `com.unity.editorcoroutines`

@@ -4,6 +4,9 @@ using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Unity.EditorCoroutines.Editor;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem.LowLevel;
+#endif
 
 namespace McpUnity.Handlers
 {
@@ -180,7 +183,7 @@ namespace McpUnity.Handlers
             if (key == null)
                 return McpServer.CreateError($"Unknown key: {keyStr}", "validation_error");
 
-            using (UnityEngine.InputSystem.LowLevel.StateEvent.From(keyboard, out var eventPtr))
+            using (StateEvent.From(keyboard, out var eventPtr))
             {
                 key.WriteValueIntoEvent(pressed ? 1f : 0f, eventPtr);
                 UnityEngine.InputSystem.InputSystem.QueueEvent(eventPtr);
@@ -258,14 +261,14 @@ namespace McpUnity.Handlers
                 return McpServer.CreateError("No mouse device found in Input System", "invalid_state");
 
             // Move mouse to position
-            using (UnityEngine.InputSystem.LowLevel.StateEvent.From(mouse, out var movePtr))
+            using (StateEvent.From(mouse, out var movePtr))
             {
                 mouse.position.WriteValueIntoEvent(new Vector2(x, y), movePtr);
                 UnityEngine.InputSystem.InputSystem.QueueEvent(movePtr);
             }
 
             // Press
-            using (UnityEngine.InputSystem.LowLevel.StateEvent.From(mouse, out var downPtr))
+            using (StateEvent.From(mouse, out var downPtr))
             {
                 mouse.position.WriteValueIntoEvent(new Vector2(x, y), downPtr);
                 mouse.leftButton.WriteValueIntoEvent(1f, downPtr);
@@ -273,7 +276,7 @@ namespace McpUnity.Handlers
             }
 
             // Release
-            using (UnityEngine.InputSystem.LowLevel.StateEvent.From(mouse, out var upPtr))
+            using (StateEvent.From(mouse, out var upPtr))
             {
                 mouse.position.WriteValueIntoEvent(new Vector2(x, y), upPtr);
                 mouse.leftButton.WriteValueIntoEvent(0f, upPtr);
@@ -294,7 +297,7 @@ namespace McpUnity.Handlers
             if (mouse == null)
                 return McpServer.CreateError("No mouse device found in Input System", "invalid_state");
 
-            using (UnityEngine.InputSystem.LowLevel.StateEvent.From(mouse, out var eventPtr))
+            using (StateEvent.From(mouse, out var eventPtr))
             {
                 mouse.position.WriteValueIntoEvent(new Vector2(x, y), eventPtr);
                 UnityEngine.InputSystem.InputSystem.QueueEvent(eventPtr);

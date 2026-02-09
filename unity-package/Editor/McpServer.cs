@@ -151,24 +151,47 @@ namespace McpUnity
 
             try
             {
+                // Clean up any leftover listener (zombie from previous failed Start or AcceptLoop crash)
                 try { _tcpListener?.Stop(); } catch { }
+                try { _cts?.Cancel(); } catch { }
+                try { _cts?.Dispose(); } catch { }
 
                 _cts = new CancellationTokenSource();
                 _tcpListener = new TcpListener(IPAddress.Loopback, _port);
+                _tcpListener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 _tcpListener.Start();
                 IsListening = true;
                 Debug.Log($"[MCP] WebSocket server started on port {_port}");
                 Task.Run(() => AcceptLoop(_cts.Token));
             }
+            catch (SocketException ex) when (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+            {
+                try { _tcpListener?.Stop(); } catch { }
+                try { _cts?.Cancel(); } catch { }
+                try { _cts?.Dispose(); } catch { }
+                _tcpListener = null;
+                _cts = null;
+                IsListening = false;
+                Debug.LogError($"[MCP] Port {_port} is already in use. Use Tools > MCP Server > Stop to force release, or close the process occupying the port.");
+            }
             catch (Exception ex)
             {
+                // Release the port if TcpListener.Start() succeeded but something else failed,
+                // or if Start() itself threw (port already in use etc.)
+                try { _tcpListener?.Stop(); } catch { }
+                try { _cts?.Cancel(); } catch { }
+                try { _cts?.Dispose(); } catch { }
+                _tcpListener = null;
+                _cts = null;
+                IsListening = false;
                 Debug.LogError($"[MCP] Failed to start server: {ex.Message}");
             }
         }
 
         public void Stop()
         {
-            if (!IsListening) return;
+            // Always attempt cleanup regardless of IsListening state,
+            // so zombie listeners (port held but IsListening == false) get released.
             IsListening = false;
 
             try
@@ -240,20 +263,28 @@ namespace McpUnity
 
         private async Task AcceptLoop(CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested && IsListening)
+            try
             {
-                try
+                while (!ct.IsCancellationRequested && IsListening)
                 {
-                    var client = await _tcpListener.AcceptTcpClientAsync();
-                    _ = Task.Run(() => HandleNewClient(client, ct));
+                    try
+                    {
+                        var client = await _tcpListener.AcceptTcpClientAsync();
+                        _ = Task.Run(() => HandleNewClient(client, ct));
+                    }
+                    catch (ObjectDisposedException) { break; }
+                    catch (SocketException) { break; }
+                    catch (Exception ex)
+                    {
+                        if (!ct.IsCancellationRequested)
+                            Debug.LogError($"[MCP] Accept error: {ex.Message}");
+                    }
                 }
-                catch (ObjectDisposedException) { break; }
-                catch (SocketException) { break; }
-                catch (Exception ex)
-                {
-                    if (!ct.IsCancellationRequested)
-                        Debug.LogError($"[MCP] Accept error: {ex.Message}");
-                }
+            }
+            finally
+            {
+                // Sync state so Start() can re-launch and Stop() knows there's nothing live.
+                IsListening = false;
             }
         }
 
