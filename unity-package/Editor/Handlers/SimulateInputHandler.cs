@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using Unity.EditorCoroutines.Editor;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
 #endif
 
