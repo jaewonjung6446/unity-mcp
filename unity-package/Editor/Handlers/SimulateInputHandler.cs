@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Unity.EditorCoroutines.Editor;
 #if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 #endif
 
@@ -175,7 +176,7 @@ namespace McpUnity.Handlers
 #if ENABLE_INPUT_SYSTEM
         private JObject SimulateNewInputSystem(string keyStr, bool pressed)
         {
-            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            var keyboard = Keyboard.current;
             if (keyboard == null)
                 return McpServer.CreateError("No keyboard device found in Input System", "invalid_state");
 
@@ -183,11 +184,7 @@ namespace McpUnity.Handlers
             if (key == null)
                 return McpServer.CreateError($"Unknown key: {keyStr}", "validation_error");
 
-            using (StateEvent.From(keyboard, out var eventPtr))
-            {
-                key.WriteValueIntoEvent(pressed ? 1f : 0f, eventPtr);
-                UnityEngine.InputSystem.InputSystem.QueueEvent(eventPtr);
-            }
+            InputState.Change(key, pressed ? 1f : 0f);
 
             return new JObject
             {
@@ -197,13 +194,13 @@ namespace McpUnity.Handlers
             };
         }
 
-        private UnityEngine.InputSystem.Controls.KeyControl FindKey(UnityEngine.InputSystem.Keyboard keyboard, string keyStr)
+        private Controls.KeyControl FindKey(Keyboard keyboard, string keyStr)
         {
             // Try exact match first
             try
             {
                 var control = keyboard[keyStr.ToLower()];
-                if (control is UnityEngine.InputSystem.Controls.KeyControl kc)
+                if (control is Controls.KeyControl kc)
                     return kc;
             }
             catch { }
@@ -246,42 +243,28 @@ namespace McpUnity.Handlers
             }
 
             // Try reflection as last resort
-            var prop = typeof(UnityEngine.InputSystem.Keyboard).GetProperty(keyStr + "Key",
+            var prop = typeof(Keyboard).GetProperty(keyStr + "Key",
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (prop != null)
-                return prop.GetValue(keyboard) as UnityEngine.InputSystem.Controls.KeyControl;
+                return prop.GetValue(keyboard) as Controls.KeyControl;
 
             return null;
         }
 
         private JObject SimulateNewInputMouseClick(float x, float y)
         {
-            var mouse = UnityEngine.InputSystem.Mouse.current;
+            var mouse = Mouse.current;
             if (mouse == null)
                 return McpServer.CreateError("No mouse device found in Input System", "invalid_state");
 
             // Move mouse to position
-            using (StateEvent.From(mouse, out var movePtr))
-            {
-                mouse.position.WriteValueIntoEvent(new Vector2(x, y), movePtr);
-                UnityEngine.InputSystem.InputSystem.QueueEvent(movePtr);
-            }
+            InputState.Change(mouse.position, new Vector2(x, y));
 
             // Press
-            using (StateEvent.From(mouse, out var downPtr))
-            {
-                mouse.position.WriteValueIntoEvent(new Vector2(x, y), downPtr);
-                mouse.leftButton.WriteValueIntoEvent(1f, downPtr);
-                UnityEngine.InputSystem.InputSystem.QueueEvent(downPtr);
-            }
+            InputState.Change(mouse.leftButton, 1f);
 
-            // Release
-            using (StateEvent.From(mouse, out var upPtr))
-            {
-                mouse.position.WriteValueIntoEvent(new Vector2(x, y), upPtr);
-                mouse.leftButton.WriteValueIntoEvent(0f, upPtr);
-                UnityEngine.InputSystem.InputSystem.QueueEvent(upPtr);
-            }
+            // Release (queued via coroutine so press registers first)
+            EditorCoroutineUtility.StartCoroutineOwnerless(ReleaseMouseButtonNextFrame(mouse));
 
             return new JObject
             {
@@ -291,17 +274,19 @@ namespace McpUnity.Handlers
             };
         }
 
+        private IEnumerator ReleaseMouseButtonNextFrame(Mouse mouse)
+        {
+            yield return null;
+            InputState.Change(mouse.leftButton, 0f);
+        }
+
         private JObject SimulateNewInputMouseMove(float x, float y)
         {
-            var mouse = UnityEngine.InputSystem.Mouse.current;
+            var mouse = Mouse.current;
             if (mouse == null)
                 return McpServer.CreateError("No mouse device found in Input System", "invalid_state");
 
-            using (StateEvent.From(mouse, out var eventPtr))
-            {
-                mouse.position.WriteValueIntoEvent(new Vector2(x, y), eventPtr);
-                UnityEngine.InputSystem.InputSystem.QueueEvent(eventPtr);
-            }
+            InputState.Change(mouse.position, new Vector2(x, y));
 
             return new JObject
             {
