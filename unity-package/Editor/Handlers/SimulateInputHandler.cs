@@ -195,13 +195,13 @@ namespace McpUnity.Handlers
             };
         }
 
-        private Controls.KeyControl FindKey(Keyboard keyboard, string keyStr)
+        private KeyControl FindKey(Keyboard keyboard, string keyStr)
         {
             // Try exact match first
             try
             {
                 var control = keyboard[keyStr.ToLower()];
-                if (control is Controls.KeyControl kc)
+                if (control is KeyControl kc)
                     return kc;
             }
             catch { }
@@ -247,7 +247,7 @@ namespace McpUnity.Handlers
             var prop = typeof(Keyboard).GetProperty(keyStr + "Key",
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
             if (prop != null)
-                return prop.GetValue(keyboard) as Controls.KeyControl;
+                return prop.GetValue(keyboard) as KeyControl;
 
             return null;
         }
