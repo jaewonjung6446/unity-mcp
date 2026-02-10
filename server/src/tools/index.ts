@@ -523,6 +523,97 @@ const tools: ToolDef[] = [
       const r = await bridge.sendRequest({ method: 'find_objects_by_criteria', params: params ?? {} });
       return textResult(r);
     }
+  },
+
+  // --- Extended QA tools ---
+  {
+    name: 'drag_ui_element',
+    description: 'Simulate a UI drag operation via PointerEventData event chain (pointerDown → beginDrag → drag → endDrag → drop). Drag from a source UI element to a target element or screen position. Returns immediately while drag animates over the specified duration. Play Mode only.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the source UI element to drag'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the source UI element'),
+      targetInstanceId: z.number().optional().describe('Instance ID of the target UI element to drop on'),
+      targetGameObjectPath: z.string().optional().describe('Hierarchical path of the target UI element'),
+      targetPosition: z.object({ x: z.number(), y: z.number() }).optional().describe('Target screen position {x, y} (used if no target element specified)'),
+      duration: z.number().optional().describe('Drag duration in seconds (default: 0.3, max: 10)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'drag_ui_element', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'scroll_ui',
+    description: 'Simulate a scroll event on a UI element (ScrollRect or custom scroll handler). Returns the normalized scroll position if a ScrollRect is found. Play Mode only.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the scroll target'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the scroll target'),
+      delta: z.object({ x: z.number(), y: z.number() }).optional().describe('Scroll delta {x, y} (e.g., {x:0, y:-300} to scroll down)'),
+      scrollDelta: z.number().optional().describe('Shorthand for vertical scroll delta (positive=up, negative=down)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'scroll_ui', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_ui_value',
+    description: 'Set the value of a UI component: Slider (float), Toggle (bool), Dropdown/TMP_Dropdown (int index), Scrollbar (float). Automatically triggers onValueChanged events.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the UI element'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the UI element'),
+      value: z.any().describe('Value to set (float for Slider/Scrollbar, bool for Toggle, int for Dropdown)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_ui_value', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'wait_until',
+    description: 'Wait until a condition is met, with configurable polling interval and timeout. Supported conditions: gameObjectActive, gameObjectInactive, objectExists, objectDestroyed, uiTextEquals, uiTextContains, componentValue. Returns elapsed time on success, or error on timeout.',
+    schema: {
+      condition: z.enum(['gameObjectActive', 'gameObjectInactive', 'objectExists', 'objectDestroyed', 'uiTextEquals', 'uiTextContains', 'componentValue']).describe('Condition type to wait for'),
+      gameObjectPath: z.string().optional().describe('Target GameObject path'),
+      instanceId: z.number().optional().describe('Target GameObject instance ID'),
+      componentType: z.string().optional().describe('Component type name (for componentValue condition)'),
+      fieldName: z.string().optional().describe('Field or property name (for componentValue condition)'),
+      expectedValue: z.string().optional().describe('Expected value as string (for text/component conditions)'),
+      timeout: z.number().optional().describe('Max wait time in seconds (default: 10, max: 30)'),
+      pollInterval: z.number().optional().describe('Polling interval in seconds (default: 0.2)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'wait_until', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_animator_state',
+    description: 'Get the current Animator state, transition info, and all parameter values for a GameObject with an Animator component. Returns state hash, normalizedTime, length, loop, transition info, and all parameters with their types and values.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the GameObject with Animator'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject with Animator'),
+      layerIndex: z.number().optional().describe('Animator layer index (default: 0)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_animator_state', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_animator_parameter',
+    description: 'Set an Animator parameter value (Float, Int, Bool) or fire a Trigger on a GameObject with an Animator component. Auto-detects parameter type if not specified.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the GameObject with Animator'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject with Animator'),
+      parameterName: z.string().describe('Name of the Animator parameter'),
+      value: z.any().optional().describe('Value to set (float, int, or bool). Not needed for Trigger type'),
+      type: z.enum(['float', 'int', 'bool', 'trigger']).optional().describe('Parameter type. Auto-detected from Animator if omitted')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_animator_parameter', params });
+      return textResult(r);
+    }
   }
 ];
 

@@ -136,6 +136,18 @@ namespace McpUnity
             Register(new Handlers.SimulateInputHandler());
             Register(new Handlers.GetComponentDataHandler());
             Register(new Handlers.FindObjectsByCriteriaHandler());
+
+            // Extended QA tools — drag, scroll, set value
+            Register(new Handlers.DragUiElementHandler());
+            Register(new Handlers.ScrollUiHandler());
+            Register(new Handlers.SetUiValueHandler());
+
+            // Condition wait
+            Register(new Handlers.WaitUntilHandler());
+
+            // Animator tools
+            Register(new Handlers.GetAnimatorStateHandler());
+            Register(new Handlers.SetAnimatorParameterHandler());
         }
 
         private void Register(IToolHandler handler)
@@ -554,16 +566,40 @@ namespace McpUnity
 
         private IEnumerator ExecuteOnMainThread(IToolHandler tool, JObject parameters, TaskCompletionSource<JObject> tcs)
         {
-            try
+            if (tool is ICoroutineToolHandler coroutineTool)
             {
-                var result = tool.Execute(parameters);
-                tcs.SetResult(result);
+                var enumerator = coroutineTool.ExecuteCoroutine(parameters, result => tcs.TrySetResult(result));
+                bool hasMore = true;
+                while (hasMore)
+                {
+                    try
+                    {
+                        hasMore = enumerator.MoveNext();
+                    }
+                    catch (Exception ex)
+                    {
+                        tcs.TrySetResult(CreateError($"Coroutine execution failed: {ex.Message}", "tool_error"));
+                        yield break;
+                    }
+                    if (hasMore)
+                        yield return enumerator.Current;
+                }
+                // Ensure TCS is always completed
+                tcs.TrySetResult(CreateError("Coroutine completed without setting result", "tool_error"));
             }
-            catch (Exception ex)
+            else
             {
-                tcs.SetResult(CreateError($"Tool execution failed: {ex.Message}", "tool_error"));
+                try
+                {
+                    var result = tool.Execute(parameters);
+                    tcs.SetResult(result);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetResult(CreateError($"Tool execution failed: {ex.Message}", "tool_error"));
+                }
+                yield return null;
             }
-            yield return null;
         }
 
         public static JObject CreateError(string message, string errorType)
