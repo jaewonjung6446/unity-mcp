@@ -91,8 +91,6 @@ namespace McpUnity.Handlers
             ExecuteEvents.Execute(go, pointerData, ExecuteEvents.pointerDownHandler);
             pointerData.pointerPress = go;
 
-            // InitializePotentialDrag
-            ExecuteEvents.Execute(go, pointerData, ExecuteEvents.initializePotentialDragHandler);
             yield return null;
 
             // BeginDrag

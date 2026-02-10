@@ -27,7 +27,9 @@
       "Bash(git -C \"D:/Unity/CautionPotion/potion\" remote -v)",
       "Bash(git -C \"D:/Unity/Izakoza/unity-mcp\" remote -v)",
       "Bash(test:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
