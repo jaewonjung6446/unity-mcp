@@ -57,8 +57,19 @@ namespace McpUnity
             {
                 EditorApplication.delayCall += () =>
                 {
-                    if (McpServerMenu.AutoStart)
+                    if (!McpServerMenu.AutoStart) return;
+                    int retries = 0;
+                    void TryStart()
+                    {
+                        if (Instance.IsListening) return;
                         Instance.Start();
+                        if (!Instance.IsListening && retries < 5)
+                        {
+                            retries++;
+                            EditorApplication.delayCall += TryStart;
+                        }
+                    }
+                    TryStart();
                 };
             };
         }

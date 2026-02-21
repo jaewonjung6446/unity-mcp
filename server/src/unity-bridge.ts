@@ -22,8 +22,8 @@ export class UnityBridge {
   private requestTimeout = 10000;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private reconnectAttempt = 0;
-  private maxReconnectDelay = 30000;
-  private maxReconnectAttempts = 10;
+  private maxReconnectDelay = 5000;
+  private maxReconnectAttempts = 60;
   private isShuttingDown = false;
   private portFromArgs: number | undefined;
 
@@ -102,8 +102,10 @@ export class UnityBridge {
       console.error(`[Unity Bridge] Max reconnect attempts (${this.maxReconnectAttempts}) reached, exiting`);
       process.exit(1);
     }
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempt), this.maxReconnectDelay);
+    // Use linear 5s interval instead of exponential backoff for domain reload resilience
+    const delay = this.maxReconnectDelay;
     this.reconnectAttempt++;
+    console.error(`[Unity Bridge] Reconnect attempt ${this.reconnectAttempt}/${this.maxReconnectAttempts} in ${delay}ms`);
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null;
       try {
