@@ -24530,7 +24530,7 @@ var UnityBridge = class {
     }
   }
   async readConfig() {
-    const configPath = import_path.default.resolve(process.cwd(), "../ProjectSettings/McpUnitySettings.json");
+    const configPath = import_path.default.resolve(process.cwd(), "ProjectSettings/McpUnitySettings.json");
     try {
       const content = await import_fs.promises.readFile(configPath, "utf-8");
       const json = JSON.parse(content);

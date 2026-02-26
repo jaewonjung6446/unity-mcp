@@ -47,7 +47,7 @@ export class UnityBridge {
   }
 
   private async readConfig(): Promise<void> {
-    const configPath = path.resolve(process.cwd(), '../ProjectSettings/McpUnitySettings.json');
+    const configPath = path.resolve(process.cwd(), 'ProjectSettings/McpUnitySettings.json');
     try {
       const content = await fs.readFile(configPath, 'utf-8');
       const json = JSON.parse(content);
