@@ -159,6 +159,77 @@ namespace McpUnity
             // Animator tools
             Register(new Handlers.GetAnimatorStateHandler());
             Register(new Handlers.SetAnimatorParameterHandler());
+
+            // GameObject CRUD
+            Register(new Handlers.CreateGameObjectHandler());
+            Register(new Handlers.DeleteGameObjectHandler());
+            Register(new Handlers.SetGameObjectPropertyHandler());
+            Register(new Handlers.DuplicateGameObjectHandler());
+            Register(new Handlers.GroupGameObjectsHandler());
+            Register(new Handlers.AlignGameObjectHandler());
+
+            // Component management
+            Register(new Handlers.AddComponentHandler());
+            Register(new Handlers.RemoveComponentHandler());
+            Register(new Handlers.SetComponentPropertyHandler());
+
+            // Prefab tools
+            Register(new Handlers.InstantiatePrefabHandler());
+            Register(new Handlers.CreatePrefabHandler());
+
+            // Hierarchy management
+            Register(new Handlers.SetParentHandler());
+
+            // Asset management extended
+            Register(new Handlers.DeleteAssetHandler());
+            Register(new Handlers.MoveAssetHandler());
+            Register(new Handlers.CreateFolderHandler());
+            Register(new Handlers.GetAssetDependenciesHandler());
+            Register(new Handlers.FindReferencesHandler());
+            Register(new Handlers.GetAssetPreviewHandler());
+            Register(new Handlers.RefreshAssetsHandler());
+
+            // Editor operations
+            Register(new Handlers.UndoRedoHandler());
+            Register(new Handlers.SetSelectionHandler());
+            Register(new Handlers.PauseEditorHandler());
+            Register(new Handlers.StepFrameHandler());
+            Register(new Handlers.ClearConsoleHandler());
+            Register(new Handlers.SetSceneViewCameraHandler());
+
+            // Project info
+            Register(new Handlers.GetScenesListHandler());
+            Register(new Handlers.GetProjectSettingsHandler());
+            Register(new Handlers.GetPackagesHandler());
+            Register(new Handlers.GetBuildSettingsHandler());
+            Register(new Handlers.GetMissingReferencesHandler());
+
+            // Rendering
+            Register(new Handlers.GetRenderSettingsHandler());
+            Register(new Handlers.SetRenderSettingsHandler());
+            Register(new Handlers.SetLightPropertyHandler());
+
+            // Physics / Rigidbody
+            Register(new Handlers.RaycastHandler());
+            Register(new Handlers.SetRigidbodyPropertyHandler());
+            Register(new Handlers.ApplyForceHandler());
+            Register(new Handlers.SetTimeScaleHandler());
+            Register(new Handlers.GetPerformanceStatsHandler());
+
+            // Audio
+            Register(new Handlers.GetAudioSourcesHandler());
+            Register(new Handlers.PlayAudioHandler());
+
+            // UI creation
+            Register(new Handlers.CreateUiElementHandler());
+
+            // Navigation
+            Register(new Handlers.GetNavMeshInfoHandler());
+            Register(new Handlers.SetNavMeshDestinationHandler());
+
+            // Scene systems
+            Register(new Handlers.GetParticleSystemInfoHandler());
+            Register(new Handlers.GetTerrainInfoHandler());
         }
 
         private void Register(IToolHandler handler)

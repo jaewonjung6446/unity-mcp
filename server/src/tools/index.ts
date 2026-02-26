@@ -614,6 +614,612 @@ const tools: ToolDef[] = [
       const r = await bridge.sendRequest({ method: 'set_animator_parameter', params });
       return textResult(r);
     }
+  },
+
+  // --- GameObject CRUD ---
+  {
+    name: 'create_game_object',
+    description: 'Create a new GameObject in the scene (empty, primitive, or with specified parent/position/rotation/scale)',
+    schema: {
+      name: z.string().optional().describe('Name for the new GameObject (default: "GameObject")'),
+      primitiveType: z.enum(['Sphere', 'Capsule', 'Cylinder', 'Cube', 'Plane', 'Quad']).optional().describe('Create a primitive mesh object'),
+      parentPath: z.string().optional().describe('Hierarchical path of the parent GameObject'),
+      position: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Local position {x, y, z}'),
+      rotation: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Local euler angles {x, y, z}'),
+      scale: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Local scale {x, y, z}')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'create_game_object', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'delete_game_object',
+    description: 'Delete a GameObject from the scene (with Undo support)',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'delete_game_object', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_game_object_property',
+    description: 'Set properties on a GameObject: name, tag, layer, active, isStatic, position, rotation, scale. All properties are optional — only specified ones are changed.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the target GameObject'),
+      name: z.string().optional().describe('New name'),
+      tag: z.string().optional().describe('New tag'),
+      layer: z.string().optional().describe('Layer name or index'),
+      active: z.boolean().optional().describe('Set active state'),
+      isStatic: z.boolean().optional().describe('Set static flag'),
+      position: z.object({ x: z.number().optional(), y: z.number().optional(), z: z.number().optional() }).optional().describe('Local position'),
+      rotation: z.object({ x: z.number().optional(), y: z.number().optional(), z: z.number().optional() }).optional().describe('Local euler angles'),
+      scale: z.object({ x: z.number().optional(), y: z.number().optional(), z: z.number().optional() }).optional().describe('Local scale')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_game_object_property', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'duplicate_game_object',
+    description: 'Duplicate a GameObject one or more times, optionally with position offset between copies',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the GameObject to duplicate'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject'),
+      count: z.number().optional().describe('Number of duplicates (default: 1, max: 100)'),
+      offset: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Position offset between each duplicate')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'duplicate_game_object', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'group_game_objects',
+    description: 'Group multiple GameObjects under a new empty parent. Centers the group at the average position.',
+    schema: {
+      instanceIds: z.array(z.number()).optional().describe('Array of instance IDs to group'),
+      gameObjectPaths: z.array(z.string()).optional().describe('Array of hierarchical paths to group'),
+      groupName: z.string().optional().describe('Name for the group parent (default: "Group")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'group_game_objects', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'align_game_object',
+    description: 'Align multiple GameObjects along an axis (x, y, or z) to min, max, center, or first object position',
+    schema: {
+      instanceIds: z.array(z.number()).optional().describe('Array of instance IDs to align. Uses current selection if omitted.'),
+      axis: z.enum(['x', 'y', 'z']).describe('Axis to align along'),
+      alignTo: z.enum(['min', 'max', 'center', 'first']).optional().describe('Align strategy (default: "center")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'align_game_object', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Component management ---
+  {
+    name: 'add_component',
+    description: 'Add a component to a GameObject (e.g., "Rigidbody", "AudioSource", "BoxCollider", custom types)',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject'),
+      componentType: z.string().describe('Component type name (e.g., "Rigidbody", "BoxCollider", "AudioSource")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'add_component', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'remove_component',
+    description: 'Remove a component from a GameObject (cannot remove Transform)',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject'),
+      componentType: z.string().describe('Component type name to remove')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'remove_component', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_component_property',
+    description: 'Set field/property values on a component. Supports int, float, bool, string, Color, Vector2/3/4, enum, and object references (by asset path).',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject'),
+      componentType: z.string().describe('Component type name (e.g., "BoxCollider", "PlayerHealth")'),
+      properties: z.record(z.any()).describe('Key-value pairs of properties to set (e.g., {"isTrigger": true, "size": {"x":2,"y":2,"z":2}})')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_component_property', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Prefab tools ---
+  {
+    name: 'instantiate_prefab',
+    description: 'Instantiate a prefab into the scene with optional name, parent, position, and rotation',
+    schema: {
+      assetPath: z.string().describe('Asset path of the prefab (e.g., "Assets/Prefabs/Enemy.prefab")'),
+      name: z.string().optional().describe('Name override for the instance'),
+      parentPath: z.string().optional().describe('Hierarchical path of the parent'),
+      position: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Local position'),
+      rotation: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Local euler angles')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'instantiate_prefab', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'create_prefab',
+    description: 'Create a prefab asset from an existing scene GameObject',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the source GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the source GameObject'),
+      savePath: z.string().describe('Asset path to save the prefab (e.g., "Assets/Prefabs/MyPrefab.prefab")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'create_prefab', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Hierarchy ---
+  {
+    name: 'set_parent',
+    description: 'Set or change the parent of a GameObject. Pass null/empty parent to unparent to scene root.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the child GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the child GameObject'),
+      parentPath: z.string().optional().describe('Hierarchical path of the new parent (omit to unparent)'),
+      parentInstanceId: z.number().optional().describe('Instance ID of the new parent'),
+      worldPositionStays: z.boolean().optional().describe('Keep world position (default: true)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_parent', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Asset management extended ---
+  {
+    name: 'delete_asset',
+    description: 'Delete an asset or folder from the Unity project',
+    schema: {
+      assetPath: z.string().describe('Asset path to delete (e.g., "Assets/Scripts/OldScript.cs")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'delete_asset', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'move_asset',
+    description: 'Move or rename a Unity asset',
+    schema: {
+      sourcePath: z.string().describe('Current asset path'),
+      destPath: z.string().describe('New asset path')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'move_asset', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'create_folder',
+    description: 'Create a folder in the Unity project (creates parent folders recursively)',
+    schema: {
+      folderPath: z.string().describe('Folder path to create (e.g., "Assets/Materials/Characters")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'create_folder', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_asset_dependencies',
+    description: 'Get all assets that an asset depends on (textures, materials, scripts, etc.)',
+    schema: {
+      assetPath: z.string().describe('Asset path to check dependencies for'),
+      recursive: z.boolean().optional().describe('Include transitive dependencies (default: true)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_asset_dependencies', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'find_references',
+    description: 'Find all assets that reference/use a given asset (reverse dependency search)',
+    schema: {
+      assetPath: z.string().describe('Asset path to find references for'),
+      filter: z.string().optional().describe('Limit search to assets under this path prefix')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'find_references', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_asset_preview',
+    description: 'Get a preview thumbnail image of an asset (prefab, material, texture, model, etc.)',
+    schema: {
+      assetPath: z.string().describe('Asset path to preview')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_asset_preview', params });
+      return imageResult(r);
+    }
+  },
+  {
+    name: 'refresh_assets',
+    description: 'Force Unity to reimport/refresh the AssetDatabase (equivalent to Ctrl+R)',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'refresh_assets', params: {} });
+      return textResult(r);
+    }
+  },
+
+  // --- Editor operations ---
+  {
+    name: 'undo_redo',
+    description: 'Perform undo or redo operations in the Unity Editor',
+    schema: {
+      action: z.enum(['undo', 'redo']).describe('Undo or redo'),
+      steps: z.number().optional().describe('Number of steps (default: 1, max: 20)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'undo_redo', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_selection',
+    description: 'Set the Editor selection to a GameObject, asset, or multiple objects. Pass no parameters to clear selection.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of a GameObject to select'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of a GameObject to select'),
+      instanceIds: z.array(z.number()).optional().describe('Array of instance IDs for multi-selection'),
+      assetPath: z.string().optional().describe('Asset path to select in Project window')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_selection', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'pause_editor',
+    description: 'Pause or unpause the Unity Editor (during Play Mode)',
+    schema: {
+      pause: z.boolean().optional().describe('true to pause, false to unpause. Toggles if omitted.')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'pause_editor', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'step_frame',
+    description: 'Advance one frame while paused in Play Mode (frame-by-frame debugging)',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'step_frame', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'clear_console',
+    description: 'Clear the Unity Console window and the internal log buffer',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'clear_console', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_scene_view_camera',
+    description: 'Control the Scene View camera: position, rotation, zoom, orthographic mode, or preset views (top, front, right, etc.)',
+    schema: {
+      position: z.object({ x: z.number().optional(), y: z.number().optional(), z: z.number().optional() }).optional().describe('Camera pivot position'),
+      rotation: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Camera euler rotation'),
+      size: z.number().optional().describe('Zoom level (orthographic size or distance)'),
+      orthographic: z.boolean().optional().describe('Switch to orthographic (true) or perspective (false)'),
+      preset: z.enum(['top', 'bottom', 'front', 'back', 'left', 'right', 'perspective']).optional().describe('Quick preset view')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_scene_view_camera', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+
+  // --- Project info ---
+  {
+    name: 'get_scenes_list',
+    description: 'Get all scenes in the project: build settings scenes, currently loaded scenes, and all scene files',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'get_scenes_list', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_project_settings',
+    description: 'Get Unity project settings (player, quality, physics, time, tags/layers)',
+    schema: {
+      category: z.enum(['all', 'player', 'quality', 'physics', 'time', 'tags_and_layers']).optional().describe('Settings category (default: "all")')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_project_settings', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_packages',
+    description: 'List all installed Unity packages from manifest.json with version info',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'get_packages', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_build_settings',
+    description: 'Get build settings: target platform, scenes in build, development mode, etc.',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'get_build_settings', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_missing_references',
+    description: 'Scan for missing script references and broken object references in scene objects or project assets',
+    schema: {
+      scope: z.enum(['scene', 'assets', 'all']).optional().describe('Where to search: "scene" (default), "assets", or "all"')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_missing_references', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+
+  // --- Rendering ---
+  {
+    name: 'get_render_settings',
+    description: 'Get scene render settings: ambient lighting, fog, skybox, reflections, render pipeline info',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'get_render_settings', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_render_settings',
+    description: 'Set scene render settings: fog, ambient lighting, skybox, reflections, halo/flare. Only specified properties are changed.',
+    schema: {
+      fog: z.boolean().optional().describe('Enable/disable fog'),
+      fogColor: z.object({ r: z.number(), g: z.number(), b: z.number(), a: z.number().optional() }).optional().describe('Fog color'),
+      fogMode: z.enum(['Linear', 'Exponential', 'ExponentialSquared']).optional().describe('Fog mode'),
+      fogDensity: z.number().optional().describe('Fog density (for exponential modes)'),
+      fogStartDistance: z.number().optional().describe('Fog start distance (for linear mode)'),
+      fogEndDistance: z.number().optional().describe('Fog end distance (for linear mode)'),
+      ambientMode: z.enum(['Skybox', 'Trilight', 'Flat', 'Custom']).optional().describe('Ambient lighting mode'),
+      ambientSkyColor: z.object({ r: z.number(), g: z.number(), b: z.number(), a: z.number().optional() }).optional().describe('Ambient sky color'),
+      ambientEquatorColor: z.object({ r: z.number(), g: z.number(), b: z.number(), a: z.number().optional() }).optional().describe('Ambient equator color (for Trilight)'),
+      ambientGroundColor: z.object({ r: z.number(), g: z.number(), b: z.number(), a: z.number().optional() }).optional().describe('Ambient ground color (for Trilight)'),
+      ambientIntensity: z.number().optional().describe('Ambient intensity multiplier'),
+      reflectionIntensity: z.number().optional().describe('Reflection intensity'),
+      reflectionBounces: z.number().optional().describe('Reflection bounces'),
+      haloStrength: z.number().optional().describe('Halo strength'),
+      flareStrength: z.number().optional().describe('Flare strength'),
+      skyboxMaterialPath: z.string().optional().describe('Asset path to skybox material')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_render_settings', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_light_property',
+    description: 'Set properties on a Light component: type, color, intensity, range, shadows, spot angle, temperature',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the Light GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the Light GameObject'),
+      lightType: z.enum(['Directional', 'Point', 'Spot', 'Area']).optional().describe('Light type'),
+      color: z.object({ r: z.number(), g: z.number(), b: z.number(), a: z.number().optional() }).optional().describe('Light color'),
+      intensity: z.number().optional().describe('Light intensity'),
+      range: z.number().optional().describe('Light range (Point/Spot)'),
+      spotAngle: z.number().optional().describe('Spot angle (Spot only)'),
+      shadows: z.enum(['None', 'Hard', 'Soft']).optional().describe('Shadow type'),
+      shadowStrength: z.number().optional().describe('Shadow strength (0-1)'),
+      colorTemperature: z.number().optional().describe('Color temperature in Kelvin'),
+      enabled: z.boolean().optional().describe('Enable/disable the light')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_light_property', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Physics ---
+  {
+    name: 'raycast',
+    description: 'Perform a physics raycast from a world-space origin+direction or from a screen point through the main camera',
+    schema: {
+      origin: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Ray origin in world space'),
+      direction: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Ray direction in world space'),
+      screenPoint: z.object({ x: z.number(), y: z.number() }).optional().describe('Screen point (alternative to origin+direction)'),
+      maxDistance: z.number().optional().describe('Maximum ray distance (default: 1000)'),
+      layerMask: z.number().optional().describe('Layer mask bitmask (default: all layers)'),
+      all: z.boolean().optional().describe('Return all hits instead of first (default: false)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'raycast', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_rigidbody_property',
+    description: 'Set properties on a Rigidbody or Rigidbody2D: mass, drag, gravity, kinematic, velocity, constraints',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the GameObject'),
+      mass: z.number().optional().describe('Mass'),
+      drag: z.number().optional().describe('Linear drag'),
+      angularDrag: z.number().optional().describe('Angular drag'),
+      useGravity: z.boolean().optional().describe('Use gravity (3D only)'),
+      gravityScale: z.number().optional().describe('Gravity scale (2D only)'),
+      isKinematic: z.boolean().optional().describe('Is kinematic'),
+      constraints: z.string().optional().describe('Constraints flags (e.g., "FreezePositionX, FreezeRotationY")'),
+      velocity: z.object({ x: z.number(), y: z.number(), z: z.number().optional() }).optional().describe('Set velocity (Play Mode only)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_rigidbody_property', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'apply_force',
+    description: 'Apply force to a Rigidbody/Rigidbody2D (Play Mode only). Supports Force, Impulse, VelocityChange, Acceleration modes.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the target GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the target GameObject'),
+      force: z.object({ x: z.number(), y: z.number(), z: z.number() }).describe('Force vector {x, y, z}'),
+      mode: z.enum(['Force', 'Impulse', 'VelocityChange', 'Acceleration']).optional().describe('Force mode (default: Force)'),
+      atPosition: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Apply force at world position (3D only)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'apply_force', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_time_scale',
+    description: 'Set Time.timeScale for slow-motion or fast-forward during Play Mode testing',
+    schema: {
+      timeScale: z.number().describe('Time scale value (0=pause, 1=normal, 0.5=half speed, 2=double speed, max: 100)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_time_scale', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_performance_stats',
+    description: 'Get runtime performance statistics: FPS, memory usage, object counts, rendering info',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'get_performance_stats', params: {} });
+      return textResult(r);
+    }
+  },
+
+  // --- Audio ---
+  {
+    name: 'get_audio_sources',
+    description: 'Get all AudioSources in the scene with clip, volume, pitch, loop, spatial blend, and play state info',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'get_audio_sources', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'play_audio',
+    description: 'Control audio playback: play, stop, pause, unpause an AudioSource. Optionally set a clip by asset path.',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the AudioSource GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the AudioSource GameObject'),
+      action: z.enum(['play', 'stop', 'pause', 'unpause']).optional().describe('Playback action (default: "play")'),
+      clipPath: z.string().optional().describe('Asset path to an AudioClip to assign before playing')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'play_audio', params: params ?? {} });
+      return textResult(r);
+    }
+  },
+
+  // --- UI creation ---
+  {
+    name: 'create_ui_element',
+    description: 'Create a UI element (Text, Image, Button, Toggle, Slider, InputField, Dropdown, ScrollView, Panel, RawImage). Auto-creates Canvas and EventSystem if needed.',
+    schema: {
+      elementType: z.enum(['text', 'image', 'button', 'toggle', 'slider', 'inputfield', 'dropdown', 'scrollview', 'panel', 'rawimage']).describe('Type of UI element to create'),
+      name: z.string().optional().describe('Name for the UI element'),
+      parentPath: z.string().optional().describe('Parent path (defaults to Canvas)'),
+      anchoredPosition: z.object({ x: z.number(), y: z.number() }).optional().describe('Anchored position on the RectTransform'),
+      sizeDelta: z.object({ x: z.number(), y: z.number() }).optional().describe('Size delta (width, height)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'create_ui_element', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Navigation ---
+  {
+    name: 'get_navmesh_info',
+    description: 'Get NavMesh information: mesh stats, all NavMeshAgents with paths/status, and NavMeshObstacles',
+    schema: {},
+    handler: async (bridge) => {
+      const r = await bridge.sendRequest({ method: 'get_navmesh_info', params: {} });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'set_navmesh_destination',
+    description: 'Set a NavMeshAgent destination or stop it (Play Mode only)',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the NavMeshAgent GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the NavMeshAgent GameObject'),
+      destination: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional().describe('Target world position'),
+      stop: z.boolean().optional().describe('Stop the agent and clear path (default: false)')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'set_navmesh_destination', params });
+      return textResult(r);
+    }
+  },
+
+  // --- Scene systems ---
+  {
+    name: 'get_particle_system_info',
+    description: 'Get ParticleSystem info: main module settings, emission, shape, play state, particle count',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the ParticleSystem GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the ParticleSystem GameObject')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_particle_system_info', params });
+      return textResult(r);
+    }
+  },
+  {
+    name: 'get_terrain_info',
+    description: 'Get Terrain information: size, resolution, layers, tree prototypes, tree instance count',
+    schema: {
+      instanceId: z.number().optional().describe('Instance ID of the Terrain GameObject'),
+      gameObjectPath: z.string().optional().describe('Hierarchical path of the Terrain GameObject')
+    },
+    handler: async (bridge, params) => {
+      const r = await bridge.sendRequest({ method: 'get_terrain_info', params: params ?? {} });
+      return textResult(r);
+    }
   }
 ];
 
