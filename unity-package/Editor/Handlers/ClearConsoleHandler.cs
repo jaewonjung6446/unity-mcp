@@ -18,7 +18,7 @@ namespace McpUnity.Handlers
             }
 
             // Also clear our log buffer
-            ConsoleLogBuffer.Instance.Clear();
+            ConsoleLogBuffer.Clear();
 
             return new JObject
             {
