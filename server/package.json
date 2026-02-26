@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "bundle": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=node18 --outfile=../unity-package/Server~/mcp-server.cjs --external:bufferutil --external:utf-8-validate",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --format=cjs --target=node18 --outfile=../Server~/mcp-server.cjs --external:bufferutil --external:utf-8-validate",
     "start": "node build/cli.js",
     "watch": "tsc --watch"
   },
